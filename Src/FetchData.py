@@ -26,6 +26,8 @@ def check_stockInfoTable(c):
         PRIMARY KEY(code)
         )"""
     cursor= c.execute(execStr)
+    print("try to creat "+__StockInfoTableName)
+    c.commit()
 
 
 def get_db_connection():
@@ -47,6 +49,7 @@ def get_db_connection():
     if __conn==None:
         print("open db file"+__DBFile)
         __conn=sql.connect(__DBFile)
+        check_stockInfoTable(__conn)
         return __conn
 
     else:
