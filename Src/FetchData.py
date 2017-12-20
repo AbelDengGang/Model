@@ -3,6 +3,54 @@
 
 import os
 import tushare as ts
+import sqlite3 as sql
+
+__DBFile=r"Stock.db"
+__conn=None # 
+__StockInfoTableName=r"StockInfo"
+def check_stockInfoTable(c):
+    """
+        检查数据库中是否有股票信息表。如果没有则建立之
+    Parameters
+    ---
+        c  sqlite3.Connection
+    Return
+    ---
+        None
+
+    """
+    execStr=""" CREATE TABLE IF NOT EXISTS """+__StockInfoTableName +r""" 
+        (
+        `code`  INTEGER NOT NULL,
+        `Name`  TEXT,
+        PRIMARY KEY(code)
+        )"""
+    cursor= c.execute(execStr)
+
+
+def get_db_connection():
+    """
+        获取数据库连接。 如果数据库已经打开，则直接返回 conn；否则打开数据库文件
+    Parameters
+    ---
+        None
+
+    return
+    ---
+        sqlite3.Connection database connection
+
+
+    """
+    global __conn
+    global __DBFile
+
+    if __conn==None:
+        print("open db file"+__DBFile)
+        __conn=sql.connect(__DBFile)
+        return __conn
+
+    else:
+        return __conn
 
 def get_all_stock_list(code=None):
     """
@@ -42,4 +90,6 @@ def get_k_data(code=None,start=None,end=None):
 
 
 if __name__ == "__main__":
+    #get_k_data()
+    get_db_connection()
     print("This module used for get stock data")
