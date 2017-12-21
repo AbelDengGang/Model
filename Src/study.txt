@@ -1,3 +1,7 @@
+b=ts.get_stock_basics()
+b.iat[1,1]
+
+
 conn=sqlite3.connect("test.db")
 b.to_sql(name=r'StockInfo_income',con=conn,if_exists='replace')
 b.to_sql(name=r'StockInfo',con=conn,if_exists='replace')
