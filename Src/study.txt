@@ -9,3 +9,40 @@ conn.close()
 
 
 INSERT OR REPLACE INTO StockInfo(code, pe) SELECT StockInfo_income.code, StockInfo_income.pe FROM StockInfo, StockInfo_income WHERE StockInfo.code = StockInfo_income.code
+
+用StockInfo_income 中的pe更新 StockInfo中的pe
+UPDATE StockInfo SET pe = (select pe from StockInfo_income where StockInfo_income.code=StockInfo.code limit 1) where exists(select * from StockInfo_income where StockInfo_income.code=StockInfo.code);
+
+
+更新多个列
+update StockInfo
+set  pe = (select pe from StockInfo_income where StockInfo_income.code=StockInfo.code limit 1),
+totals = (select totals from StockInfo_income where StockInfo_income.code=StockInfo.code limit 1)
+where exists(select * from StockInfo_income where StockInfo_income.code=StockInfo.code);
+
+
+插入或者更新一条记录，其中code必须设置为主键，否则会一直插入新的记录而不更新
+insert or replace into StockInfo (code,pe) values (
+   "600025",
+   300.0
+   );
+
+
+
+---------------------------------------
+按行遍历dataFrame
+用 b.iterrows() 返回一个[index,seral]对的列表
+Iterate over DataFrame rows as (index, Series) pairs
+
+
+for index,row in b.iterrows():
+    print(index,row)
+
+
+对 Serial的操作
+可以认为Serial是个字典，Index是关键字
+row.index 可以列出所有的Index, 
+row.values 可以列出所有的value
+
+可以通过row[index]来访问
+print(row['name'])
