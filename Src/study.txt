@@ -27,7 +27,10 @@ insert or replace into StockInfo (code,pe) values (
    300.0
    );
 
-
+---------------------------------------
+dataframe 获得列名字
+columns.tolist()
+这个函数不包括index的名字
 
 ---------------------------------------
 按行遍历dataFrame
