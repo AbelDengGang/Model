@@ -94,10 +94,15 @@ def store_stock_list_to_db(stock_base=None):
     valueStr=r''
     for index,row in stock_base.iterrows():
         fieldstr=r'code'
-        valueStr=r''+index
+        valueStr=r"""'"""+index+r"""'"""
         for i in range(len(row)):
             fieldstr = fieldstr + r',' + row.index[i]
-            valueStr = valueStr + r',' + str(row.values[i])
+            # sql 要求字符串用‘’括起来
+            val=row.values[i]
+            if type(val)==str:
+                valueStr = valueStr + r""",'""" + str(val) + r"""'"""
+            else:
+                valueStr = valueStr + r',' + str(val)
         print(fieldstr)
         print(valueStr)
         queryStrStart = r"""insert or replace into StockInfo (""" + fieldstr + r""" ) values ("""
