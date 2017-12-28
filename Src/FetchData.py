@@ -78,7 +78,7 @@ def get_db_connection():
     else:
         return __conn
 
-def store_stock_list_to_db(stock_base=None):
+def store_stock_list_to_db(stock_base=None,conn=None):
     """
         把dataframe格式的股票信息存储到数据表里头
     parameter
@@ -88,8 +88,14 @@ def store_stock_list_to_db(stock_base=None):
     """
     if stock_base is None:
         return
+    global __conn
+    # as default, use the global connection.
+    # for test , use input parameter
+    if conn is None:
+        c=__conn
+    else:
+        c=conn
 
-         # 准备列名称
     fieldstr=r''
     valueStr=r''
     for index,row in stock_base.iterrows():
@@ -108,15 +114,18 @@ def store_stock_list_to_db(stock_base=None):
         queryStrStart = r"""insert or replace into StockInfo (""" + fieldstr + r""" ) values ("""
         queryStrEnd=r""")"""
 
-        queryStr=queryStrStart + valueStr + queryStrEnd
+        execStr = queryStrStart + valueStr + queryStrEnd
 
-        print(queryStr) 
+        #print(queryStr) 
 
-    if __conn is None:
-        return
+        if c is not None:
+            print("sql string:"+execStr)
+            c.execute(execStr)
 
 
-    pass
+    
+    if c is not None:
+        c.commit()
 
 
 
