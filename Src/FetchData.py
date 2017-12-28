@@ -89,32 +89,28 @@ def store_stock_list_to_db(stock_base=None):
     if stock_base is None:
         return
 
+         # 准备列名称
+    fieldstr=r''
+    valueStr=r''
+    for index,row in stock_base.iterrows():
+        fieldstr=r'code'
+        valueStr=r''+index
+        for i in range(len(row)):
+            fieldstr = fieldstr + r',' + row.index[i]
+            valueStr = valueStr + r',' + str(row.values[i])
+        print(fieldstr)
+        print(valueStr)
+        queryStrStart = r"""insert or replace into StockInfo (""" + fieldstr + r""" ) values ("""
+        queryStrEnd=r""")"""
+
+        queryStr=queryStrStart + valueStr + queryStrEnd
+
+        print(queryStr) 
+
     if __conn is None:
         return
 
-     # 准备列名称
-    indexhead=[]
-    tmp=stock_base.columns.tolist()
-    headlist=indexhead+tmp
-    fieldstr=r'code'
-    for head in headlist:
-        fieldstr=fieldstr + head
-    
-    fieldStr=r'code'
-    for head in headlist:
-        fieldstr=fieldstr + head
 
-    queryStrStart = r"""insert or replace into StockInfo (""" + fieldStr + r""" ) values ("""
-    queryStrEnd=r""")"""
-
-    valueStr=""""""
-    # create value string for each row
-
-    queryStr=queryStrStart + valueStr + queryStrEnd
-
-     
-
-    
     pass
 
 
