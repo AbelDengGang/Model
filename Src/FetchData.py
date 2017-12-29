@@ -291,9 +291,12 @@ def fetch_all_k():
     if b is None:
         print("can not get basic list")
         return None
+    total=len(b.index)
+    i=0
     for index,row in b.iterrows():
         code=str(index)
-        print("get " +code)
+        print("get " +code+r"     "+ str(i)+r"""/"""+str(total))
+        i=i+1
         get_k_data(code)
 
 
