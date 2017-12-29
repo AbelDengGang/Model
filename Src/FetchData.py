@@ -9,6 +9,7 @@ import sqlite3 as sql
 __DBFile=r"Stock.db"
 __conn=None # 
 __StockInfoTableName=r"StockInfo"
+___k_data_table=r"""k_data"""
 __StockInfoTableVersion=1   # 如果表中的版本和当前版本不一样，则需要更新到当前版本
 __NetworkConnected=True
 def check_stockInfoTable(c):
@@ -79,6 +80,13 @@ def get_db_connection():
     else:
         return __conn
 
+
+def to_sql_value_string(data):
+    if type(data) == str:
+        return r"""'"""+data+r"""'"""
+    else:
+        return str(data)
+
 def store_stock_list_to_db(stock_base=None,conn=None):
     """
         把dataframe格式的股票信息存储到数据表里头
@@ -105,11 +113,7 @@ def store_stock_list_to_db(stock_base=None,conn=None):
         for i in range(len(row)):
             fieldstr = fieldstr + r',' + row.index[i]
             # sql 要求字符串用‘’括起来
-            val=row.values[i]
-            if type(val)==str:
-                valueStr = valueStr + r""",'""" + str(val) + r"""'"""
-            else:
-                valueStr = valueStr + r',' + str(val)
+            valueStr = valueStr +r',' + to_sql_value_string(row.values[i])
         print(fieldstr)
         print(valueStr)
         global __StockInfoTableName
@@ -129,10 +133,10 @@ def store_stock_list_to_db(stock_base=None,conn=None):
     
     if c is not None:
         c.commit()
-___k_data_table=r"""k_data"""
+
 def store_k_data_to_db(data, conn=None):
     global ___k_data_table
-
+    # check and create table
     sqlStr=r"""CREATE TABLE IF NOT EXISTS `"""+___k_data_table+r"""` (
         `date`  TEXT,
         `open`  REAL,
@@ -147,6 +151,39 @@ def store_k_data_to_db(data, conn=None):
 
     conn.execute(sqlStr)
     conn.commit()
+
+    if data is None:
+        return
+
+    for index,row in data.iterrows():
+        
+        valueStr=''
+        fieldstr=''
+        for i in range(len(row)):
+            if i==0:
+                fieldstr = row.index[i]
+                valueStr = to_sql_value_string(row.values[i])
+            else:    
+                fieldstr = fieldstr + r',' + row.index[i]
+                valueStr = valueStr +r',' + to_sql_value_string(row.values[i])
+
+
+        queryStrStart = r"""insert or replace into """+ ___k_data_table +r""" (""" + fieldstr + r""" ) values ("""
+        queryStrEnd=r""")"""
+
+        execStr = queryStrStart + valueStr + queryStrEnd
+        print( execStr)
+        if conn is not None:
+            conn.execute(execStr)
+        
+    
+    if conn is not None:
+        conn.commit()
+
+            
+
+    pass
+
 
 
 
