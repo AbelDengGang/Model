@@ -129,7 +129,24 @@ def store_stock_list_to_db(stock_base=None,conn=None):
     
     if c is not None:
         c.commit()
+___k_data_table=r"""k_data"""
+def store_k_data_to_db(data, conn=None):
+    global ___k_data_table
 
+    sqlStr=r"""CREATE TABLE IF NOT EXISTS `"""+___k_data_table+r"""` (
+        `date`  TEXT,
+        `open`  REAL,
+        `close` REAL,
+        `high`  REAL,
+        `low`   REAL,
+        `volume`    REAL,
+        `code`  TEXT
+        );"""
+    if conn is None:
+        conn=get_db_connection()
+
+    conn.execute(sqlStr)
+    conn.commit()
 
 
 
@@ -188,6 +205,7 @@ def get_k_data(code=None,start=None,end=None):
 #
 # todo 增补数据库的数据
 
+    # check and create table
 
 
 if __name__ == "__main__":
