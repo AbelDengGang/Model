@@ -153,6 +153,7 @@ def store_k_data_to_db(data, conn=None):
     conn.commit()
 
     if data is None:
+        print("data is None")
         return
 
     for index,row in data.iterrows():
@@ -172,7 +173,7 @@ def store_k_data_to_db(data, conn=None):
         queryStrEnd=r""")"""
 
         execStr = queryStrStart + valueStr + queryStrEnd
-        print( execStr)
+        #print( execStr)
         if conn is not None:
             conn.execute(execStr)
         
@@ -220,7 +221,7 @@ def get_all_stock_list(code=None):
     return pandas.read_sql(r"""SELECT * FROM """+ __StockInfoTableName ,conn)
    
  
-def get_k_data(code=None,start=None,end=None):
+def get_k_data(code=None,dbconn=None,start='',end=''):
     """
         获取指定股票的从 start 到 end的k线数据。
         在获取数据时，会先从本地数据库中获取数据，再从网络中补充数据。
@@ -239,12 +240,55 @@ def get_k_data(code=None,start=None,end=None):
     return
     ------
     """
-#
-# todo 增补数据库的数据
+    global __NetworkConnected
+    global ___k_data_table
+    
+    if dbconn is None:
+        conn = get_db_connection()
+    else:
+        conn = dbconn
+    #print("conn",conn)
+    if __NetworkConnected == True:
+    
+        #
+        # todo 增补数据库的数据
+        try:
+            k_net=ts.get_k_data(code,start,end)
+            #print("get network data")
+        except:
+            print(r'tu.get_k_data raise error')
+            error_type, error_value, trace_back = sys.exc_info()
+            k_net = None
+            print(error_value)
+        
+        #print("before call tore_k_data_to_db")
+        #print(k_net)
+        store_k_data_to_db(k_net,conn)
 
-    # check and create table
+    # load data from db
+    execStrStart=r"""SELECT * FROM """ + ___k_data_table + r""" WHERE code = """ + to_sql_value_string(code) + r""" """
+    dateStr = ''
+    execStrEnd=r""" order by date"""
+    if (start == '') and (end == ''):
+        dateStr = ''
+    elif (start != '') and (end != ''):
+        dateStr = r""" AND date >= """ + to_sql_value_string(start) + r"""and date <= """ + to_sql_value_string(end)
+    elif (start != '') and (end == ''):
+        dateStr = r"""AND date >= """ + to_sql_value_string(start)
+    elif (start == '') and (end != ''):
+        dateStr = r""" AND date <= """ + to_sql_value_string(end)
+    
+    execStr = execStrStart + dateStr + execStrEnd
+    #print(execStr)
+
+    if conn is not None:
+        return pandas.read_sql(execStr,conn)
+    else:
+        return None
 
 
+
+   
 if __name__ == "__main__":
     #get_k_data()
     get_db_connection()
