@@ -6,6 +6,11 @@ conn=sqlite3.connect("test.db")
 b.to_sql(name=r'StockInfo_income',con=conn,if_exists='replace')
 b.to_sql(name=r'StockInfo',con=conn,if_exists='replace')
 conn.close()
+k.to_sql(r"""k_data""",conn,if_exists='append',index=False)
+
+
+pandas.read_sql("SELECT * FROM StockInfo",conn)
+pandas.read_sql_table 不支持sqlite
 
 
 INSERT OR REPLACE INTO StockInfo(code, pe) SELECT StockInfo_income.code, StockInfo_income.pe FROM StockInfo, StockInfo_income WHERE StockInfo.code = StockInfo_income.code
