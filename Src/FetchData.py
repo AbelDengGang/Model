@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 import sys
 import os
+import pandas
 import tushare as ts
 import sqlite3 as sql
 
@@ -111,7 +112,9 @@ def store_stock_list_to_db(stock_base=None,conn=None):
                 valueStr = valueStr + r',' + str(val)
         print(fieldstr)
         print(valueStr)
-        queryStrStart = r"""insert or replace into StockInfo (""" + fieldstr + r""" ) values ("""
+        global __StockInfoTableName
+
+        queryStrStart = r"""insert or replace into """+ __StockInfoTableName +r""" (""" + fieldstr + r""" ) values ("""
         queryStrEnd=r""")"""
 
         execStr = queryStrStart + valueStr + queryStrEnd
@@ -146,6 +149,7 @@ def get_all_stock_list(code=None):
         dataframe
     """
     global __NetworkConnected
+    global __StockInfoTableName
     try:
         b=ts.get_stock_basics()
         print(r'ts.get_stock_basics returns')
@@ -155,12 +159,13 @@ def get_all_stock_list(code=None):
         error_type, error_value, trace_back = sys.exc_info()
         print(error_value)
         __NetworkConnected=False
+    conn=get_db_connection()
     if __NetworkConnected:
-        store_stock_list_to_db(b)
-        
+        store_stock_list_to_db(b,conn)
+    
+    return pandas.read_sql(r"""SELECT * FROM """+ __StockInfoTableName ,conn)
    
-    pass
-
+ 
 def get_k_data(code=None,start=None,end=None):
     """
         获取指定股票的从 start 到 end的k线数据。
