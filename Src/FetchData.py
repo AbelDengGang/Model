@@ -114,8 +114,8 @@ def store_stock_list_to_db(stock_base=None,conn=None):
             fieldstr = fieldstr + r',' + row.index[i]
             # sql 要求字符串用‘’括起来
             valueStr = valueStr +r',' + to_sql_value_string(row.values[i])
-        print(fieldstr)
-        print(valueStr)
+        #print(fieldstr)
+        #print(valueStr)
         global __StockInfoTableName
 
         queryStrStart = r"""insert or replace into """+ __StockInfoTableName +r""" (""" + fieldstr + r""" ) values ("""
@@ -126,7 +126,7 @@ def store_stock_list_to_db(stock_base=None,conn=None):
         #print(queryStr) 
 
         if c is not None:
-            print("sql string:"+execStr)
+            #print("sql string:"+execStr)
             c.execute(execStr)
 
 
@@ -218,7 +218,7 @@ def get_all_stock_list(code=None):
     if __NetworkConnected:
         store_stock_list_to_db(b,conn)
     
-    return pandas.read_sql(r"""SELECT * FROM """+ __StockInfoTableName ,conn)
+    return pandas.read_sql(r"""SELECT * FROM """+ __StockInfoTableName ,con=conn,index_col='code')
    
  
 def get_k_data(code=None,dbconn=None,start='',end=''):
@@ -285,6 +285,16 @@ def get_k_data(code=None,dbconn=None,start='',end=''):
         return pandas.read_sql(execStr,conn)
     else:
         return None
+
+def fetch_all_k():
+    b=get_all_stock_list()
+    if b is None:
+        print("can not get basic list")
+        return None
+    for index,row in b.iterrows():
+        code=str(index)
+        print("get " +code)
+        get_k_data(code)
 
 
 
