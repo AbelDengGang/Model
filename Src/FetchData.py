@@ -92,7 +92,7 @@ def store_stock_list_to_db(stock_base=None,conn=None):
     # as default, use the global connection.
     # for test , use input parameter
     if conn is None:
-        c=__conn
+        c=get_db_connection()
     else:
         c=conn
 
@@ -145,6 +145,7 @@ def get_all_stock_list(code=None):
     ---
         dataframe
     """
+    global __NetworkConnected
     try:
         b=ts.get_stock_basics()
         print(r'ts.get_stock_basics returns')
