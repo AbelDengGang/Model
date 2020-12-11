@@ -2,19 +2,20 @@
 import os
 import shutil
 from pycocotools.coco import COCO
+import argparse
 
-coco_ver = 2014
-coco_home = '/home/gang/YOLO/coco/'
-coco_root = coco_home + f'/coco{coco_ver}/'
+# coco_ver = 2014
+# coco_home = '/home/gang/YOLO/coco/'
+# coco_root = coco_home + f'/coco{coco_ver}/'
 custom_category = {
                     'cell phone': 0,
                     'person': 1,
                     }
 category_id_map = {}
 
-def load_annotation(coco_ver = 2014,type='instances_train'):
+def load_annotation(coco_ver = '2014',type='train'):
     global coco_root
-    annFile = coco_root + 'annotations/' + f'{type}{coco_ver}.json'
+    annFile = coco_root + 'annotations/' + f'instances_{type}{coco_ver}.json'
     coco=COCO(annFile)
     return coco
 
@@ -102,11 +103,23 @@ def construct_single_yolo_label_file(coco,img_id):
     # print(file_name,img_id, yolo_labels)
     return yolo_labels,file_name
 
-def construct_yolo_labels(coco,img_ids,coco_picture_folder):
+def construct_yolo_labels(coco,img_ids,yolo_type,coco_picture_folder):
     global coco_root
     yolo_label_folder = coco_root + "yolo_label/"
     yolo_pic_folder = coco_root + "yolo_picture/"
-    f_yolo_pic = open(coco_root + 'yolo_pic_lists.txt','w')
+
+    isExists=os.path.exists(yolo_label_folder)
+    if not isExists:
+        os.makedirs(yolo_label_folder)
+        print(f"create {yolo_label_folder}")
+    
+    isExists=os.path.exists(yolo_pic_folder)
+    if not isExists:
+        os.makedirs(yolo_pic_folder)
+        print(f"create {yolo_pic_folder}")
+
+
+    f_yolo_pic = open(coco_root + f'yolo_{yolo_type}_pic_lists.txt','w')
     for img_id in img_ids:
         labels ,file_name = construct_single_yolo_label_file(coco=coco,img_id = img_id)
         #todo write label into file
@@ -132,10 +145,22 @@ def construct_yolo_labels(coco,img_ids,coco_picture_folder):
 
 
 if __name__ == "__main__":
-    coco = load_annotation()
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--coco_home", type=str, required=True, help="the folder including coco2014")
+    parser.add_argument("--coco_ver", type=str, default="2014", help="coco version, such 2014 , 2017")
+    parser.add_argument("--coco_type", type=str, default="train", help="data set type, such train , val")
+
+    opt = parser.parse_args()
+    print(opt)
+    coco_home = opt.coco_home
+    coco_ver = opt.coco_ver
+    coco_root = coco_home + f'/coco{coco_ver}/'
+    coco_dataset_type = opt.coco_type
+    coco = load_annotation(coco_ver = coco_ver,type=coco_dataset_type)
     construct_category_list(coco = coco)
     img_ids = get_img_ids(coco = coco)
-    construct_yolo_labels(coco=coco,img_ids = img_ids,coco_picture_folder = coco_root + 'train2014/')
+    construct_yolo_labels(coco=coco,img_ids = img_ids, yolo_type = coco_dataset_type,coco_picture_folder = coco_root + f'{coco_dataset_type}{coco_ver}/')
 
 
     
