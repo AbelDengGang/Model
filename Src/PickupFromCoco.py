@@ -38,16 +38,16 @@ def get_img_ids(coco):
     遍历category_id_map, 找出包含有key的图片列表
     """
     global category_id_map
-    img_ids_un = []
+    img_ids_uion = []
 
     for coco_category_id in category_id_map.keys():
         img_ids = coco.getImgIds(catIds = [coco_category_id])
-        img_ids_un = list(set(img_ids_un) | set(img_ids))
+        img_ids_uion = list(set(img_ids_uion) | set(img_ids))
     
     # here's a test for images with 2 categories
     # img_ids = coco.getImgIds(category_id_map.keys())
 
-    return img_ids_un
+    return img_ids_uion
 
 
 
@@ -88,6 +88,7 @@ def construct_single_yolo_label_file(coco,img_id):
     imgInfo = coco.loadImgs(img_id)[0]
     file_name = imgInfo['file_name']
     
+    
     annIds = coco.getAnnIds(imgIds=[img_id])
     anns = coco.loadAnns(annIds)
 
@@ -105,31 +106,28 @@ def construct_single_yolo_label_file(coco,img_id):
 
 def construct_yolo_labels(coco,img_ids,yolo_type,coco_picture_folder):
     global coco_root
-    yolo_label_folder = coco_root + "yolo_label/"
-    yolo_pic_folder = coco_root + "yolo_picture/"
+    yolo_custom_pic_folder = coco_root + "yolo_custom_picture/"
 
-    isExists=os.path.exists(yolo_label_folder)
+    isExists=os.path.exists(yolo_custom_pic_folder)
     if not isExists:
-        os.makedirs(yolo_label_folder)
-        print(f"create {yolo_label_folder}")
-    
-    isExists=os.path.exists(yolo_pic_folder)
-    if not isExists:
-        os.makedirs(yolo_pic_folder)
-        print(f"create {yolo_pic_folder}")
+        os.makedirs(yolo_custom_pic_folder)
+        print(f"create {yolo_custom_pic_folder}")
 
 
     f_yolo_pic = open(coco_root + f'yolo_{yolo_type}_pic_lists.txt','w')
     for img_id in img_ids:
         labels ,file_name = construct_single_yolo_label_file(coco=coco,img_id = img_id)
-        #todo write label into file
-        label_file_name = yolo_label_folder + file_name.split('.')[0] + '.txt'
-        print(label_file_name)
+        # coco2017文件名里没有train/val前缀,为了避免冲突,统一加上 yolo_type 前缀
+        custom_yolo_file_name = f'{yolo_type}_{file_name}'
 
-        yolo_pic_file = yolo_pic_folder + file_name
+        #todo write label into file
+        label_file_name = yolo_custom_pic_folder + custom_yolo_file_name.split('.')[0] + '.txt'
+        print(custom_yolo_file_name)
+
+        yolo_pic_file = yolo_custom_pic_folder + custom_yolo_file_name
         if os.path.exists(yolo_pic_file): # 在这个目录下第二次运行,如果不删除原来的符号连接,再次创建时会报错
             os.remove(yolo_pic_file)
-        os.symlink(coco_picture_folder + file_name,yolo_pic_folder + file_name)
+        os.symlink(coco_picture_folder + file_name,yolo_custom_pic_folder + custom_yolo_file_name)
 
         f_yolo_pic.write(yolo_pic_file+'\n')
 
