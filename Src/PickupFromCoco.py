@@ -104,7 +104,28 @@ def construct_single_yolo_label_file(coco,img_id):
     # print(file_name,img_id, yolo_labels)
     return yolo_labels,file_name
 
-def construct_yolo_labels(coco,img_ids,yolo_type,coco_picture_folder):
+
+
+def convert_to_yolo_file_name(coco,file_name,yolo_type,yolo_ver,coco_picture_folder):
+    global coco_root
+    yolo_custom_pic_folder = coco_root + "yolo_custom_picture/"
+
+    # coco2017文件名里没有train/val前缀,为了避免冲突,统一加上 yolo_type yolo_ver 前缀
+    custom_yolo_file_name = f'{yolo_type}_{yolo_ver}_{file_name}'
+
+    # yolo 图片名
+    yolo_pic_file = yolo_custom_pic_folder + custom_yolo_file_name
+
+    #label name
+    label_file_name = yolo_custom_pic_folder + custom_yolo_file_name.split('.')[0] + '.txt'
+
+    return yolo_pic_file, label_file_name
+
+
+def create_link_and_label_file(coco,file_name,yolo_type,yolo_ver,coco_picture_folder):
+    """
+    在coco_picture_folder目录下创建文件的符号链接,并返回 .txt/jpg 文件路径
+    """
     global coco_root
     yolo_custom_pic_folder = coco_root + "yolo_custom_picture/"
 
@@ -113,33 +134,65 @@ def construct_yolo_labels(coco,img_ids,yolo_type,coco_picture_folder):
         os.makedirs(yolo_custom_pic_folder)
         print(f"create {yolo_custom_pic_folder}")
 
+    yolo_pic_file, label_file_name = convert_to_yolo_file_name(coco = coco,file_name = file_name,yolo_type = yolo_type,yolo_ver = yolo_ver,coco_picture_folder = coco_picture_folder)
+    # 创建符号链接
+    if os.path.exists(yolo_pic_file): # 在这个目录下第二次运行,如果不删除原来的符号连接,再次创建时会报错
+        os.remove(yolo_pic_file)
+    os.symlink(coco_picture_folder + file_name,yolo_pic_file)
 
-    f_yolo_pic = open(coco_root + f'yolo_{yolo_type}_pic_lists.txt','w')
+    #创建空.txt文件
+    f = open(label_file_name , "w")
+    f.close()
+
+    return yolo_pic_file,label_file_name
+
+    
+
+
+def construct_yolo_labels(coco,img_ids,yolo_type,yolo_ver,coco_picture_folder):
+    global coco_root
+
     for img_id in img_ids:
         labels ,file_name = construct_single_yolo_label_file(coco=coco,img_id = img_id)
-        # coco2017文件名里没有train/val前缀,为了避免冲突,统一加上 yolo_type 前缀
-        custom_yolo_file_name = f'{yolo_type}_{file_name}'
 
-        #todo write label into file
-        label_file_name = yolo_custom_pic_folder + custom_yolo_file_name.split('.')[0] + '.txt'
-        print(custom_yolo_file_name)
+        _, label_file_name = convert_to_yolo_file_name(coco = coco , file_name = file_name, yolo_type=yolo_type,yolo_ver=yolo_ver,coco_picture_folder=coco_picture_folder)
 
-        yolo_pic_file = yolo_custom_pic_folder + custom_yolo_file_name
-        if os.path.exists(yolo_pic_file): # 在这个目录下第二次运行,如果不删除原来的符号连接,再次创建时会报错
-            os.remove(yolo_pic_file)
-        os.symlink(coco_picture_folder + file_name,yolo_custom_pic_folder + custom_yolo_file_name)
-
-        f_yolo_pic.write(yolo_pic_file+'\n')
-
+        print("write label to {}".format(label_file_name))
+        
         with open(label_file_name , "w") as f:
             for label in labels:
                 f.write(label + '\n')
             f.close()
-            
-    f_yolo_pic.close()
+    print('{} label writed'.format(len(img_ids)))        
+
+def construct_background_yolo_labels(coco, yolo_type,yolo_ver,coco_picture_folder):
+    """
+    为所有jpg文件在coco_picture_folder建立链接,并建立空.txt文件.
+    在这之后调用construct_yolo_labels 建立正样本.其余的空 .txt 文件作为负样本
+    """
+    pic_file_list = []
+    for local_file in os.listdir(coco_picture_folder):
+        file_path = os.path.join(coco_picture_folder, local_file)  
+        if os.path.isdir(file_path):  
+            pass
+        else:
+            file_name_parts = os.path.splitext(local_file)
+            if len(file_name_parts) == 2:
+                if file_name_parts[1] == ".jpg":
+                    pic_file_list.append(local_file)
 
 
-    
+    f_yolo_pic_list = open(coco_root + f'yolo_{yolo_type}_pic_lists.txt','w')
+
+    for pic_file in pic_file_list:
+        yolo_pic_file, _ = create_link_and_label_file(coco = coco , file_name = pic_file, yolo_type=yolo_type,yolo_ver=yolo_ver,coco_picture_folder=coco_picture_folder)
+
+        f_yolo_pic_list.write(yolo_pic_file+'\n')
+
+    f_yolo_pic_list.close()
+    print('{} symbol created'.format(len(pic_file_list)))
+
+    pass
 
 
 if __name__ == "__main__":
@@ -158,7 +211,8 @@ if __name__ == "__main__":
     coco = load_annotation(coco_ver = coco_ver,type=coco_dataset_type)
     construct_category_list(coco = coco)
     img_ids = get_img_ids(coco = coco)
-    construct_yolo_labels(coco=coco,img_ids = img_ids, yolo_type = coco_dataset_type,coco_picture_folder = coco_root + f'{coco_dataset_type}{coco_ver}/')
+    construct_background_yolo_labels(coco=coco,yolo_type = coco_dataset_type,yolo_ver = coco_ver,coco_picture_folder = coco_root + f'{coco_dataset_type}{coco_ver}/')
+    construct_yolo_labels(coco=coco,img_ids = img_ids, yolo_type = coco_dataset_type,yolo_ver = coco_ver,coco_picture_folder = coco_root + f'{coco_dataset_type}{coco_ver}/')
 
 
     
