@@ -151,19 +151,30 @@ def create_link_and_label_file(coco,file_name,yolo_type,yolo_ver,coco_picture_fo
 
 def construct_yolo_labels(coco,img_ids,yolo_type,yolo_ver,coco_picture_folder):
     global coco_root
-
+    pic_file_name_with_select_cat_list = []
     for img_id in img_ids:
         labels ,file_name = construct_single_yolo_label_file(coco=coco,img_id = img_id)
 
-        _, label_file_name = convert_to_yolo_file_name(coco = coco , file_name = file_name, yolo_type=yolo_type,yolo_ver=yolo_ver,coco_picture_folder=coco_picture_folder)
+        pic_file_name, label_file_name = convert_to_yolo_file_name(coco = coco , file_name = file_name, yolo_type=yolo_type,yolo_ver=yolo_ver,coco_picture_folder=coco_picture_folder)
 
         print("write label to {}".format(label_file_name))
+        pic_file_name_with_select_cat_list.append(pic_file_name)
         
         with open(label_file_name , "w") as f:
             for label in labels:
                 f.write(label + '\n')
             f.close()
-    print('{} label writed'.format(len(img_ids)))        
+    print('{} label writed'.format(len(img_ids)))    
+    
+    # 生成只包含指定种类的图片的列表文件
+    pic_with_cat_list_file_name = coco_root + f'yolo_{yolo_type}_pic_cat_only_lists.txt'
+    f_pic_file = open(pic_with_cat_list_file_name,'w')    
+    for pic_file_name in pic_file_name_with_select_cat_list:
+        f_pic_file.write(pic_file_name + '\n')
+    f_pic_file.close()
+    print(f"Write picture with category file list into {pic_with_cat_list_file_name}")
+
+
 
 def construct_background_yolo_labels(coco, yolo_type,yolo_ver,coco_picture_folder):
     """
@@ -181,8 +192,9 @@ def construct_background_yolo_labels(coco, yolo_type,yolo_ver,coco_picture_folde
                 if file_name_parts[1] == ".jpg":
                     pic_file_list.append(local_file)
 
-
-    f_yolo_pic_list = open(coco_root + f'yolo_{yolo_type}_pic_lists.txt','w')
+    # 生成包含所有图片的列表文件
+    pic_file_list_file_name = coco_root + f'yolo_{yolo_type}_pic_lists.txt'
+    f_yolo_pic_list = open(pic_file_list_file_name,'w')
 
     for pic_file in pic_file_list:
         yolo_pic_file, _ = create_link_and_label_file(coco = coco , file_name = pic_file, yolo_type=yolo_type,yolo_ver=yolo_ver,coco_picture_folder=coco_picture_folder)
@@ -191,7 +203,7 @@ def construct_background_yolo_labels(coco, yolo_type,yolo_ver,coco_picture_folde
 
     f_yolo_pic_list.close()
     print('{} symbol created'.format(len(pic_file_list)))
-
+    print(f'write all picture file list into {pic_file_list_file_name}')
     pass
 
 
